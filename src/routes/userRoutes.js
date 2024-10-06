@@ -4,7 +4,7 @@ import {
   confirmSignup,
   signIn,
   logOut,
-} from "../controllers/userCreation.js";
+} from "../controllers/userController.js";
 import { authenticateJWT } from "../middleware/authenticate.js";
 import { addApplicationForm } from "../controllers/formController.js";
 

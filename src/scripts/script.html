@@ -1,0 +1,52 @@
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.querySelector(
+      "#eael-register-form.eael-register-form.eael-lr-form"
+    );
+    console.log("Hello this is the form: ", form);
+    if (form) {
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const username = document.querySelector('input[name="user_name"]').value;
+        const email = document.querySelector('input[name="email"]').value;
+        const password = document.querySelector('input[name="password"]').value;
+
+        console.log(username);
+        console.log(email);
+        console.log(password);
+
+        const formData = {
+          username: username,
+          email: email,
+          password: password,
+        };
+
+        try {
+
+          const response = await fetch(
+            "https://08ab-2001-14bb-11d-c3d6-76a1-ee12-428c-c341.ngrok-free.app/user/signup",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData), 
+            }
+          );
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert("Signup successful!");
+          } else {
+            alert("Error: " + result);
+          }
+        } catch (error) {
+          console.error("Error during signup:", error);
+          alert("There was an error submitting the form.");
+        }
+      });
+    }
+  });
+</script>

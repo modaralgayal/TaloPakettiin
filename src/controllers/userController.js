@@ -29,6 +29,7 @@ const generateSecretHash = (username, clientId, clientSecret) => {
 
 export const signup = async (req, res) => {
   const { username, password, email } = req.body;
+  console.log("Recieved data in signup function");
   const secretHash = generateSecretHash(
     username,
     process.env.AWS_CLIENT_ID,
@@ -47,12 +48,15 @@ export const signup = async (req, res) => {
     ],
   };
 
+  console.log("These are the params: ", params);
+
   try {
     const command = new SignUpCommand(params);
     const data = await cognitoClient.send(command);
     res.json(data);
   } catch (error) {
-    res.status(400).json({ error: error });
+    console.log("Error here");
+    res.status(400).json({ error: error.message });
   }
 };
 
@@ -103,7 +107,7 @@ export const signIn = async (req, res) => {
     const data = await cognitoClient.send(command);
 
     const accessToken = data.AuthenticationResult.AccessToken;
-    const idToken = data.AuthenticationResult.IdToken; 
+    const idToken = data.AuthenticationResult.IdToken;
     const refreshToken = data.AuthenticationResult.RefreshToken;
 
     const jwtToken = jwt.sign(

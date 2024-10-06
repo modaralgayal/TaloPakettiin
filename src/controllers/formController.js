@@ -45,7 +45,7 @@ export const getItemsByClientId = async (clientId) => {
   };
 
   try {
-    const command = new ScanCommand(params); 
+    const command = new ScanCommand(params);
     const data = await client.send(command);
     return data.Items;
   } catch (error) {

@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import charRoutes from "./routes/charRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
+import wordPressRoutes from "./routes/wordPressRoutes.js"
 
 dotenv.config();
 const app = express();
@@ -35,6 +36,7 @@ app.use((req, res, next) => {
 app.use("/chars", charRoutes);
 app.use("/user", userRoutes);
 app.use("/forms", formRoutes);
+app.use("/wordpress", wordPressRoutes)
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
