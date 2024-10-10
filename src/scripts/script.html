@@ -1,51 +1,110 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.querySelector(
+    const registerForm = document.querySelector(
       "#eael-register-form.eael-register-form.eael-lr-form"
     );
-    console.log("Hello this is the form: ", form);
-    if (form) {
-      form.addEventListener("submit", async function (event) {
-        event.preventDefault();
+    const signInForm = document.querySelector("#eael-login-form.eael-lr-form"); // Correct selector for sign-in form
 
-        const username = document.querySelector('input[name="user_name"]').value;
+    console.log("Take 2");
+
+    async function handleFormSubmission(event, formType) {
+      event.preventDefault();
+
+      console.log("This is the form type: ", formType);
+
+      let formData;
+      if (formType === "register") {
+        const username = document.querySelector(
+          'input[name="user_name"]'
+        ).value;
         const email = document.querySelector('input[name="email"]').value;
         const password = document.querySelector('input[name="password"]').value;
 
-        console.log(username);
-        console.log(email);
-        console.log(password);
+        console.log("Registering user:", { username, email, password });
 
-        const formData = {
+        formData = {
           username: username,
           email: email,
           password: password,
         };
 
-        try {
+        const endpoint =
+          "https://3999-2001-14bb-69f-9089-7ed0-b30d-2237-bfbe.ngrok-free.app/user/signup";
 
-          const response = await fetch(
-            "https://08ab-2001-14bb-11d-c3d6-76a1-ee12-428c-c341.ngrok-free.app/user/signup",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(formData), 
-            }
-          );
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
 
           const result = await response.json();
 
           if (response.ok) {
             alert("Signup successful!");
           } else {
-            alert("Error: " + result);
+            alert("Error: " + result.error); // Adjusted to access the error message
           }
         } catch (error) {
           console.error("Error during signup:", error);
           alert("There was an error submitting the form.");
         }
+      } else if (formType === "signin") {
+        const username = document.querySelector(
+          'input[name="eael-user-login"]'
+        ).value;
+        const password = document.querySelector(
+          'input[name="eael-user-password"]'
+        ).value;
+
+        console.log("Signing in user:", { username, password });
+
+        formData = {
+          username: username, // Use username as per your signIn function
+          password: password,
+        };
+
+        // Send data to the sign-in endpoint
+        const endpoint =
+          "https://3999-2001-14bb-69f-9089-7ed0-b30d-2237-bfbe.ngrok-free.app/user/signin";
+
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            alert("Sign-in successful!");
+            // Optionally, redirect to a dashboard or home page
+            // window.location.href = '/dashboard'; // Uncomment and adjust the URL as needed
+          } else {
+            alert("Error: " + result.error); // Adjusted to access the error message
+          }
+        } catch (error) {
+          console.error("Error during sign-in:", error);
+          alert("There was an error submitting the form.");
+        }
+      }
+    }
+
+    // Add event listeners for both forms
+    if (registerForm) {
+      registerForm.addEventListener("submit", function (event) {
+        handleFormSubmission(event, "register");
+      });
+    }
+
+    if (signInForm) {
+      signInForm.addEventListener("submit", function (event) {
+        handleFormSubmission(event, "signin");
       });
     }
   });
