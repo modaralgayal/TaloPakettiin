@@ -3,9 +3,9 @@
     const registerForm = document.querySelector(
       "#eael-register-form.eael-register-form.eael-lr-form"
     );
-    const signInForm = document.querySelector("#eael-login-form.eael-lr-form"); // Correct selector for sign-in form
+    const signInForm = document.querySelector("#eael-login-form.eael-lr-form");
 
-    console.log("Take 2");
+    console.log("Take 3");
 
     async function handleFormSubmission(event, formType) {
       event.preventDefault();
@@ -20,7 +20,7 @@
         const email = document.querySelector('input[name="email"]').value;
         const password = document.querySelector('input[name="password"]').value;
 
-        console.log("Registering user:", { username, email, password });
+        console.log("Registering user:", { username, email });
 
         formData = {
           username: username,
@@ -59,14 +59,13 @@
           'input[name="eael-user-password"]'
         ).value;
 
-        console.log("Signing in user:", { username, password });
+        console.log("Signing in user:", { username });
 
         formData = {
-          username: username, // Use username as per your signIn function
+          username: username,
           password: password,
         };
 
-        // Send data to the sign-in endpoint
         const endpoint =
           "https://3999-2001-14bb-69f-9089-7ed0-b30d-2237-bfbe.ngrok-free.app/user/signin";
 
@@ -83,10 +82,10 @@
 
           if (response.ok) {
             alert("Sign-in successful!");
-            // Optionally, redirect to a dashboard or home page
-            // window.location.href = '/dashboard'; // Uncomment and adjust the URL as needed
+            localStorage.setItem("jwtToken", result.jwtToken); // Store JWT Token
+            console.log("This is the jwtToken: ", result.jwtToken);
           } else {
-            alert("Error: " + result.error); // Adjusted to access the error message
+            alert("Error: " + result.error);
           }
         } catch (error) {
           console.error("Error during sign-in:", error);
