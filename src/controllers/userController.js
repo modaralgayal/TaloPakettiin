@@ -1,3 +1,4 @@
+// Import the necessary libraries
 import dotenv from "dotenv";
 import path from "path";
 import jwt from "jsonwebtoken";
@@ -10,16 +11,19 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.AWS_DEFAULT_REGION,
 });
 
+// Function to generate secret hash
 const generateSecretHash = (username, clientId, clientSecret) => {
   return crypto
     .createHmac("SHA256", clientSecret)
@@ -27,9 +31,10 @@ const generateSecretHash = (username, clientId, clientSecret) => {
     .digest("base64");
 };
 
+// Signup function
 export const signup = async (req, res) => {
   const { username, password, email } = req.body;
-  console.log("Recieved data in signup function");
+  console.log("Received data in signup function");
   const secretHash = generateSecretHash(
     username,
     process.env.AWS_CLIENT_ID,
@@ -60,6 +65,7 @@ export const signup = async (req, res) => {
   }
 };
 
+// Confirm signup function
 export const confirmSignup = async (req, res) => {
   const { username, confirmationCode } = req.body;
   const clientId = process.env.AWS_CLIENT_ID;
@@ -83,8 +89,10 @@ export const confirmSignup = async (req, res) => {
   }
 };
 
+// SignIn function
 export const signIn = async (req, res) => {
   const { username, password } = req.body;
+  console.log("Signing in");
 
   const secretHash = generateSecretHash(
     username,
@@ -116,7 +124,21 @@ export const signIn = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    res.json({ accessToken, jwtToken, idToken, refreshToken });
+    res.cookie("jwtToken", jwtToken, {
+      secure: true, // true when running over HTTPS
+      sameSite: 'none', // Ensures it can be sent with cross-origin requests
+      //domain: "3vbp2t1s-8000.euw.devtunnels.ms"
+    });
+
+    res.json({
+      success: true,
+      message: "Sign in successful!",
+      redirectUrl: "https://talopakettiin.fi/my-home-page-2/",
+      accessToken,
+      idToken,
+      refreshToken,
+    });
+    console.log("Sign in Successful");
   } catch (error) {
     console.log(error);
     res.status(400).json({ error: error.message });
@@ -140,5 +162,24 @@ export const logOut = async (req, res) => {
   } catch (error) {
     console.error("Logout Error:", error);
     res.status(400).json({ error: error.message });
+  }
+};
+
+export const getUserData = (req, res) => {
+  console.log("Getting user data");
+  console.log(req.cookies)
+  const token = req.cookies.jwtToken; 
+  const origin = req.headers.origin;
+  //console.log("This is the token: ",token)
+
+  if (token) {
+    jwt.verify(token, process.env.MY_SECRET_JWT_KEY, (err, user) => {
+      if (err) {
+        return res.sendStatus(403);
+      }
+      res.json({ username: user.username, jwtToken: token }); // Return user data
+    });
+  } else {
+    res.sendStatus(401); // Unauthorized if token is missing
   }
 };

@@ -3,6 +3,7 @@
     "@aws-sdk/util-dynamodb": "^3.656.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.5.5",
+    "nodemon": "^3.1.7",
     "typescript": "^5.6.2"
   },
   "scripts": {
@@ -15,12 +16,12 @@
     "aws-sdk": "^2.1691.0",
     "axios": "^1.7.7",
     "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "eslint": "^9.11.0",
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemon": "^3.1.7",
     "uuid": "^10.0.0"
   },
   "type": "module"

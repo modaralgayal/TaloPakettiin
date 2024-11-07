@@ -1,16 +1,12 @@
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const registerForm = document.querySelector(
-      "#eael-register-form.eael-register-form.eael-lr-form"
-    );
     const signInForm = document.querySelector("#eael-login-form.eael-lr-form");
-
-    console.log("Take 3");
+    const registerForm = document.querySelector(
+      "#eael-register-form.eael-lr-form"
+    );
 
     async function handleFormSubmission(event, formType) {
       event.preventDefault();
-
-      console.log("This is the form type: ", formType);
 
       let formData;
       if (formType === "register") {
@@ -20,16 +16,9 @@
         const email = document.querySelector('input[name="email"]').value;
         const password = document.querySelector('input[name="password"]').value;
 
-        console.log("Registering user:", { username, email });
+        formData = { username, email, password };
 
-        formData = {
-          username: username,
-          email: email,
-          password: password,
-        };
-
-        const endpoint =
-          "https://3999-2001-14bb-69f-9089-7ed0-b30d-2237-bfbe.ngrok-free.app/user/signup";
+        const endpoint = "https://3vbp2t1s-8000.euw.devtunnels.ms/user/signup";
 
         try {
           const response = await fetch(endpoint, {
@@ -43,13 +32,13 @@
           const result = await response.json();
 
           if (response.ok) {
-            alert("Signup successful!");
+            alert("Registration successful! You can now sign in.");
           } else {
-            alert("Error: " + result.error); // Adjusted to access the error message
+            alert("Registration error: " + result.error || "Unknown error");
           }
         } catch (error) {
-          console.error("Error during signup:", error);
-          alert("There was an error submitting the form.");
+          console.error("Error during registration:", error);
+          alert("There was an error submitting the registration form.");
         }
       } else if (formType === "signin") {
         const username = document.querySelector(
@@ -59,15 +48,9 @@
           'input[name="eael-user-password"]'
         ).value;
 
-        console.log("Signing in user:", { username });
+        formData = { username, password };
 
-        formData = {
-          username: username,
-          password: password,
-        };
-
-        const endpoint =
-          "https://3999-2001-14bb-69f-9089-7ed0-b30d-2237-bfbe.ngrok-free.app/user/signin";
+        const endpoint = "https://3vbp2t1s-8000.euw.devtunnels.ms/user/signin";
 
         try {
           const response = await fetch(endpoint, {
@@ -76,34 +59,34 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify(formData),
+            credentials: "include", // Ensure credentials (cookies) are sent
           });
 
           const result = await response.json();
 
           if (response.ok) {
             alert("Sign-in successful!");
-            localStorage.setItem("jwtToken", result.jwtToken); // Store JWT Token
-            console.log("This is the jwtToken: ", result.jwtToken);
+            window.location.href = "https://talopakettiin.fi/my-home-page-2/"; // Redirect on successful sign-in
           } else {
-            alert("Error: " + result.error);
+            alert("Sign-in error: " + result.error || "Unknown error");
           }
         } catch (error) {
           console.error("Error during sign-in:", error);
-          alert("There was an error submitting the form.");
+          alert("There was an error submitting the sign-in form.");
         }
       }
     }
 
-    // Add event listeners for both forms
-    if (registerForm) {
-      registerForm.addEventListener("submit", function (event) {
-        handleFormSubmission(event, "register");
-      });
-    }
-
+    // Event listeners
     if (signInForm) {
       signInForm.addEventListener("submit", function (event) {
         handleFormSubmission(event, "signin");
+      });
+    }
+
+    if (registerForm) {
+      registerForm.addEventListener("submit", function (event) {
+        handleFormSubmission(event, "register");
       });
     }
   });
