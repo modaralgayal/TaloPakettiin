@@ -1,41 +1,17 @@
 <script type="module">
-    document.addEventListener("DOMContentLoaded", async function () {
-      console.log("At form page, Fetching User");
-  
-      try {
-        // Make the API call to get the user data (or authentication status)
-        const response = await fetch("https://3vbp2t1s-8000.euw.devtunnels.ms/user/data", {
+  document.addEventListener("DOMContentLoaded", async function () {
+    console.log("At form page, Fetching User");
+
+    try {
+      const response = await fetch(
+        "https://3vbp2t1s-8000.euw.devtunnels.ms/user/data",
+        {
           method: "GET",
-          credentials: "include" // Ensure cookies are included for authentication
-        });
-  
-        if (response.ok) {
-          const contentType = response.headers.get("Content-Type");
-          if (contentType && contentType.includes("application/json")) {
-  
-            const userData = await response.json();
-            console.log(userData); // Check the user data
-  
-            // Check if the username is present
-            if (userData.username) {
-              // If the user is authenticated, show their username or other relevant info
-              document.getElementById("formWelcomeMessage").innerText = `Welcome back, ${userData.username}!`;
-            } else {
-              // If no user info (e.g., JWT token is missing), show a guest message or redirect
-              document.getElementById("formWelcomeMessage").innerText = "Please sign in to fill out the form.";
-              // Optionally, redirect to a login page or show a sign-in modal
-              // window.location.href = '/login'; // Or display login modal
-            }
-          } else {
-            console.error("Unexpected response type:", contentType);
-            alert("Unexpected response type from server.");
-          }
-        } else {
-          alert("Failed to fetch user data: " + response.statusText);
+          credentials: "include",
         }
-      } catch (error) {
-        console.error("Error fetching user data:", error.message);
-      }
-    });
-  </script>
-  
+      );
+    } catch (error) {
+      console.error("Error fetching user data:", error.message);
+    }
+  });
+</script>

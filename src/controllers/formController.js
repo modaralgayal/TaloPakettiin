@@ -57,29 +57,28 @@ export const getItemsByClientId = async (clientId) => {
 // Function to sanitize field names (keys)
 const sanitizeFieldName = (fieldName) => {
   return fieldName
-    .replace(/[ä]/g, 'a')
-    .replace(/[ö]/g, 'o')
-    .replace(/[å]/g, 'a')
-    .replace(/[ü]/g, 'u')
-    .replace(/[ß]/g, 'ss')
-    .replace(/\s+/g, '_')  
-    .replace(/[^a-zA-Z0-9_]/g, '');
+    .replace(/[ä]/g, "a")
+    .replace(/[ö]/g, "o")
+    .replace(/[å]/g, "a")
+    .replace(/[ü]/g, "u")
+    .replace(/[ß]/g, "ss")
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_]/g, "");
 };
 
 // Function to clean multiple-choice answers (split by newline)
 const cleanMultipleChoiceAnswers = (value) => {
-  if (typeof value === 'string' && value.includes('\n')) {
-    return value.split('\n').map(item => item.trim());
+  if (typeof value === "string" && value.includes("\n")) {
+    return value.split("\n").map((item) => item.trim());
   }
   return value;
 };
 
 export const receiveFormData = async (req, res) => {
   try {
-    const rawFormData = req.body; 
-    const token = req.cookies.jwtToken; 
-    console.log(token)
-    console.log("Received form data:", rawFormData);
+    const rawFormData = req.body;
+    const token = req.cookies.jwtToken;
+    console.log("This is the token:", token);
     const sanitizedFormData = {};
     for (let field in rawFormData) {
       if (rawFormData.hasOwnProperty(field)) {
@@ -94,6 +93,8 @@ export const receiveFormData = async (req, res) => {
     res.status(200).json({ success: true, data: sanitizedFormData });
   } catch (error) {
     console.error("Error cleaning form data:", error);
-    res.status(500).json({ error: "An error occurred while cleaning form data." });
+    res
+      .status(500)
+      .json({ error: "An error occurred while cleaning form data." });
   }
 };

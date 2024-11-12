@@ -17,6 +17,7 @@ const allowedOrigins = [
   "3vbp2t1s-8000.euw.devtunnels.ms",
   "https://3vbp2t1s-8000.euw.devtunnels.ms/",
   "https://talopakettiin.fi",
+  "talopakettiin.fi",
 ];
 
 // Use CORS middleware
@@ -53,15 +54,16 @@ app.use((err, req, res, next) => {
 
 // Middleware to catch TokenExpiredError
 const checkTokenExpiration = (err, req, res, next) => {
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'Token has expired. Please log in again.' });
+  if (err.name === "TokenExpiredError") {
+    return res
+      .status(401)
+      .json({ error: "Token has expired. Please log in again." });
   }
   next(err);
 };
 
 // Add this middleware after your token verification logic
 app.use(checkTokenExpiration);
-
 
 // Start the server
 app.listen(PORT, () =>
