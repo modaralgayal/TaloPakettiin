@@ -77,6 +77,8 @@ const cleanMultipleChoiceAnswers = (value) => {
 export const receiveFormData = async (req, res) => {
   try {
     const rawFormData = req.body; 
+    const token = req.cookies.jwtToken; 
+    console.log(token)
     console.log("Received form data:", rawFormData);
     const sanitizedFormData = {};
     for (let field in rawFormData) {

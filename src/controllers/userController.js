@@ -123,12 +123,14 @@ export const signIn = async (req, res) => {
       process.env.MY_SECRET_JWT_KEY,
       { expiresIn: "1h" }
     );
-
+    
     res.cookie("jwtToken", jwtToken, {
-      secure: true, // true when running over HTTPS
-      sameSite: 'none', // Ensures it can be sent with cross-origin requests
-      //domain: "3vbp2t1s-8000.euw.devtunnels.ms"
+      secure: true,
+      httpOnly: true,
+      path: "/",
+      sameSite: "None"
     });
+    
 
     res.json({
       success: true,
@@ -144,6 +146,7 @@ export const signIn = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
 
 export const logOut = async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -174,6 +177,7 @@ export const getUserData = (req, res) => {
   if (token) {
     jwt.verify(token, process.env.MY_SECRET_JWT_KEY, (err, user) => {
       if (err) {
+        console.log(err)
         return res.sendStatus(403);
       }
       console.log("Welcome", user.username)
