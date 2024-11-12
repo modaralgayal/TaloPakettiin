@@ -14,19 +14,20 @@ const PORT = process.env.PORT || 8000;
 
 // Define allowed origins for CORS
 const allowedOrigins = [
-
   "3vbp2t1s-8000.euw.devtunnels.ms",
-  "https://talopakettiin.fi"
+  "https://3vbp2t1s-8000.euw.devtunnels.ms/",
+  "https://talopakettiin.fi",
 ];
 
 // Use CORS middleware
 app.set("trust proxy", 1);
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ["GET", "POST", "OPTIONS"]
-})
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
 );
 
 app.use(bodyParser.json());
@@ -50,13 +51,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Middleware to log response headers
-app.use((req, res, next) => {
-  res.on("finish", () => {
-    console.log("Response headers:", res.getHeaders());
-  });
-  next();
-});
+
 
 // Start the server
 app.listen(PORT, () =>

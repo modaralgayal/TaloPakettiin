@@ -167,7 +167,6 @@ export const logOut = async (req, res) => {
 
 export const getUserData = (req, res) => {
   console.log("Getting user data");
-  console.log(req.cookies)
   const token = req.cookies.jwtToken; 
   const origin = req.headers.origin;
   //console.log("This is the token: ",token)
@@ -177,9 +176,12 @@ export const getUserData = (req, res) => {
       if (err) {
         return res.sendStatus(403);
       }
-      res.json({ username: user.username, jwtToken: token }); // Return user data
+      console.log("Welcome", user.username)
+      res.json({ username: user.username }); // Return user data
     });
   } else {
     res.sendStatus(401); // Unauthorized if token is missing
   }
 };
+
+
