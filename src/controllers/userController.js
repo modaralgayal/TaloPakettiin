@@ -125,6 +125,7 @@ export const signIn = async (req, res) => {
     );
     
     res.cookie("jwtToken", jwtToken, {
+      domain: ".3vbp2t1s-8000.euw.devtunnels.ms",
       secure: true,
       httpOnly: true,
       path: "/",
