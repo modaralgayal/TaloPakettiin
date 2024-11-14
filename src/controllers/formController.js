@@ -1,4 +1,8 @@
-import { scanTable, addItemToTable } from "../services/dynamoServices.js";
+import {
+  scanTable,
+  addItemToTable,
+  addApplicationToUser,
+} from "../services/dynamoServices.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -76,25 +80,38 @@ const cleanMultipleChoiceAnswers = (value) => {
 
 export const receiveFormData = async (req, res) => {
   try {
+    const user = req.user;
+    console.log(user)
+
+    console.log("Authenticated User:", user);
+    console.log("Authenticated User User ID (sub):", user.userId); 
+
     const rawFormData = req.body;
-    const token = req.cookies.jwtToken;
-    console.log("This is the token:", token);
     const sanitizedFormData = {};
     for (let field in rawFormData) {
       if (rawFormData.hasOwnProperty(field)) {
         const sanitizedFieldName = sanitizeFieldName(field);
-        const cleanedValue = cleanMultipleChoiceAnswers(rawFormData[field]);
+        const cleanedValue = cleanMultipleChoiceAnswers(rawFormData[field]); 
         sanitizedFormData[sanitizedFieldName] = cleanedValue;
       }
     }
 
-    console.log("Sanitized form data:", sanitizedFormData);
+    const applicationData = {
+      userId: user.userId,
+      formData: sanitizedFormData, 
+      timestamp: new Date().toISOString(),
+      username: user.username,
+    };
+
+    await addApplicationToUser(applicationData);
 
     res.status(200).json({ success: true, data: sanitizedFormData });
   } catch (error) {
-    console.error("Error cleaning form data:", error);
+    console.error("Error processing form data:", error);
     res
       .status(500)
-      .json({ error: "An error occurred while cleaning form data." });
+      .json({ error: "An error occurred while processing the form data." });
   }
 };
+
+

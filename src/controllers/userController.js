@@ -1,7 +1,7 @@
 // Import the necessary libraries
 import dotenv from "dotenv";
 import path from "path";
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 import {
   CognitoIdentityProviderClient,
   SignUpCommand,
@@ -115,23 +115,34 @@ export const signIn = async (req, res) => {
     const data = await cognitoClient.send(command);
 
     const accessToken = data.AuthenticationResult.AccessToken;
-    const idToken = data.AuthenticationResult.IdToken;
+    const idToken = data.AuthenticationResult.IdToken; 
     const refreshToken = data.AuthenticationResult.RefreshToken;
 
+    const decodedIdToken = decode(idToken); 
+
+    if (!decodedIdToken || !decodedIdToken.sub) {
+      throw new Error("User ID (sub) not found in the ID token.");
+    }
+
+    const userSub = decodedIdToken.sub;  
+
     const jwtToken = jwt.sign(
-      { username, clientId: process.env.AWS_CLIENT_ID },
+      { 
+        sub: userSub,  
+        clientId: process.env.AWS_CLIENT_ID,
+        username  
+      },
       process.env.MY_SECRET_JWT_KEY,
       { expiresIn: "1h" }
     );
-    
-    res.cookie("jwtToken", jwtToken, {
+
+    res.cookie("Token", jwtToken, {
       domain: ".3vbp2t1s-8000.euw.devtunnels.ms",
       secure: true,
       httpOnly: true,
       path: "/",
-      sameSite: "None"
+      sameSite: "None",
     });
-    
 
     res.json({
       success: true,
@@ -147,7 +158,6 @@ export const signIn = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
-
 
 export const logOut = async (req, res) => {
   const authHeader = req.headers.authorization;
@@ -171,22 +181,20 @@ export const logOut = async (req, res) => {
 
 export const getUserData = (req, res) => {
   console.log("Getting user data");
-  const token = req.cookies.jwtToken; 
+  const token = req.cookies.Token;
   const origin = req.headers.origin;
   //console.log("This is the token: ",token)
 
   if (token) {
     jwt.verify(token, process.env.MY_SECRET_JWT_KEY, (err, user) => {
       if (err) {
-        console.log(err)
+        console.log(err);
         return res.sendStatus(403);
       }
-      console.log("Welcome", user.username)
-      res.json({ username: user.username }); // Return user data
+      console.log("Welcome", user.username);
+      res.json({ username: user.username });
     });
   } else {
-    res.sendStatus(401); // Unauthorized if token is missing
+    res.sendStatus(401); 
   }
 };
-
-

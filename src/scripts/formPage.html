@@ -3,13 +3,29 @@
     console.log("At form page, Fetching User");
 
     try {
+      // Fetch the user data from your backend
       const response = await fetch(
         "https://3vbp2t1s-8000.euw.devtunnels.ms/user/data",
         {
           method: "GET",
-          credentials: "include",
+          credentials: "include",  // Ensure cookies are sent if needed
         }
       );
+
+      // Check if the response was successful
+      if (response.ok) {
+        const data = await response.json(); // Parse the JSON response
+
+        // Assuming the JWT token is included in the response body, store it in localStorage
+        if (data.jwtToken) {
+          localStorage.setItem('jwtToken', data.jwtToken);
+          console.log("JWT Token stored in localStorage:", data.jwtToken);
+        } else {
+          console.log("JWT Token not found in the response.");
+        }
+      } else {
+        console.log("Failed to fetch user data, status:", response.status);
+      }
     } catch (error) {
       console.error("Error fetching user data:", error.message);
     }

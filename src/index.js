@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 8000;
 
 // Define allowed origins for CORS
 const allowedOrigins = [
-  "3vbp2t1s-8000.euw.devtunnels.ms",
+  ".3vbp2t1s-8000.euw.devtunnels.ms",
   "https://3vbp2t1s-8000.euw.devtunnels.ms/",
   "https://talopakettiin.fi",
   "talopakettiin.fi",
