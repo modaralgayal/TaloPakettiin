@@ -58,60 +58,34 @@ export const getItemsByClientId = async (clientId) => {
   }
 };
 
-// Function to sanitize field names (keys)
-const sanitizeFieldName = (fieldName) => {
-  return fieldName
-    .replace(/[ä]/g, "a")
-    .replace(/[ö]/g, "o")
-    .replace(/[å]/g, "a")
-    .replace(/[ü]/g, "u")
-    .replace(/[ß]/g, "ss")
-    .replace(/\s+/g, "_")
-    .replace(/[^a-zA-Z0-9_]/g, "");
-};
-
-// Function to clean multiple-choice answers (split by newline)
-const cleanMultipleChoiceAnswers = (value) => {
-  if (typeof value === "string" && value.includes("\n")) {
-    return value.split("\n").map((item) => item.trim());
-  }
-  return value;
-};
-
 export const receiveFormData = async (req, res) => {
+  console.log("Recieving...")
   try {
     const user = req.user;
-    console.log(user)
-
     console.log("Authenticated User:", user);
-    console.log("Authenticated User User ID (sub):", user.userId); 
+    console.log("Authenticated User ID (sub):", user.userId);
 
-    const rawFormData = req.body;
-    const sanitizedFormData = {};
-    for (let field in rawFormData) {
-      if (rawFormData.hasOwnProperty(field)) {
-        const sanitizedFieldName = sanitizeFieldName(field);
-        const cleanedValue = cleanMultipleChoiceAnswers(rawFormData[field]); 
-        sanitizedFormData[sanitizedFieldName] = cleanedValue;
-      }
+    const { entryId } = req.body.entryId;
+    console.log("This is the entryId", entryId)
+
+    if (!entryId) {
+      return res.status(400).json({ error: "Form ID is required" });
     }
+
+    console.log("Received Form ID:", entryId);
 
     const applicationData = {
       userId: user.userId,
-      formData: sanitizedFormData, 
-      timestamp: new Date().toISOString(),
       username: user.username,
+      formId, 
+      timestamp: new Date().toISOString(),
     };
 
     await addApplicationToUser(applicationData);
 
-    res.status(200).json({ success: true, data: sanitizedFormData });
+    res.status(200).json({ success: true, message: "Form ID logged successfully!" });
   } catch (error) {
-    console.error("Error processing form data:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while processing the form data." });
+    console.error("Error processing form ID:", error);
+    res.status(500).json({ error: "An error occurred while processing the form ID." });
   }
 };
-
-

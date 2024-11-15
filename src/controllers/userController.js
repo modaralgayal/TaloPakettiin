@@ -183,7 +183,6 @@ export const getUserData = (req, res) => {
   console.log("Getting user data");
   const token = req.cookies.Token;
   const origin = req.headers.origin;
-  //console.log("This is the token: ",token)
 
   if (token) {
     jwt.verify(token, process.env.MY_SECRET_JWT_KEY, (err, user) => {

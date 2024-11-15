@@ -11,17 +11,14 @@ export const verifyAndDecodeJWT = (token) => {
 
 export const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers.jwttoken; 
-  console.log("Authorization Header:", authHeader);
 
   if (!authHeader) {
     return res.sendStatus(401); 
   }
 
   const token = authHeader.split(' ')[1];  
-  console.log("Extracted Token:", token);
 
   const decodedToken = verifyAndDecodeJWT(token);
-  console.log(decodedToken)
 
   if (!decodedToken) {
     console.log('Invalid or expired token');
