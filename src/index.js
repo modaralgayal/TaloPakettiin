@@ -17,7 +17,7 @@ const allowedOrigins = [
   ".3vbp2t1s-8000.euw.devtunnels.ms",
   "https://3vbp2t1s-8000.euw.devtunnels.ms/",
   "https://talopakettiin.fi",
-  "talopakettiin.fi",
+  ".talopakettiin.fi",
 ];
 
 // Use CORS middleware
