@@ -41,7 +41,7 @@ export const signup = async (req, res) => {
     process.env.AWS_CLIENT_SECRET
   );
   const params = {
-    ClientId: process.env.AWS_CLIENT_ID,
+    ClientId: "Talopakettiin-API",
     SecretHash: secretHash,
     Username: username,
     Password: password,
