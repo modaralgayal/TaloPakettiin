@@ -1,12 +1,13 @@
 import express from "express";
-import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import charRoutes from "./routes/charRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import formRoutes from "./routes/formRoutes.js";
-import wordPressRoutes from "./routes/wordPressRoutes.js";
 import cookieParser from "cookie-parser";
+import bodyParser from "body-parser";
+
+
 
 dotenv.config();
 const app = express();
@@ -31,15 +32,14 @@ app.use(
   })
 );
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 app.use(cookieParser());
 
 // Route Handlers
 app.use("/chars", charRoutes);
 app.use("/user", userRoutes);
 app.use("/forms", formRoutes);
-app.use("/wordpress", wordPressRoutes);
 
 app.get("/test", (req, res) => {
   console.log("Test endpoint hit");

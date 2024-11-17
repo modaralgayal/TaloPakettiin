@@ -1,18 +1,18 @@
-import {
-  scanTable,
-  addItemToTable,
-  addApplicationToUser,
-} from "../services/dynamoServices.js";
-import dotenv from "dotenv";
+import { scanTable, addItemToTable, addApplicationToUser } from "../services/dynamoServices.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ScanCommand } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
+import { getSecrets } from "../utils/secrets.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// Initialize secrets and client
+let secrets;
+(async () => {
+  secrets = await getSecrets(); // Fetch secrets once at initialization
+})();
 
 export const addApplicationForm = async (req, res) => {
   try {
@@ -30,7 +30,8 @@ export const addApplicationForm = async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    await addItemToTable(Item);
+    // Use secrets to access the table name
+    await addItemToTable(Item, secrets.TABLE_NAME);
 
     res.status(201).json({ message: "Application form added successfully!" });
   } catch (error) {
@@ -38,19 +39,19 @@ export const addApplicationForm = async (req, res) => {
     res.status(500).json({ error: "Failed to add application form" });
   }
 };
-// Untested, Test it later // hello
-export const getItemsByClientId = async (clientId) => {
-  const params = {
-    TableName: process.env.TABLE_NAME,
-    FilterExpression: "clientId = :clientId",
-    ExpressionAttributeValues: {
-      ":clientId": clientId,
-    },
-  };
 
+export const getItemsByClientId = async (clientId) => {
   try {
+    const params = {
+      TableName: secrets.TABLE_NAME, // Use secrets for the table name
+      FilterExpression: "clientId = :clientId",
+      ExpressionAttributeValues: {
+        ":clientId": clientId,
+      },
+    };
+
     const command = new ScanCommand(params);
-    const data = await client.send(command);
+    const data = await client.send(command); // Ensure `client` is initialized with secrets
     return data.Items;
   } catch (error) {
     console.error("Error fetching items by clientId:", error);
@@ -59,14 +60,14 @@ export const getItemsByClientId = async (clientId) => {
 };
 
 export const receiveFormData = async (req, res) => {
-  console.log("Recieving...")
+  console.log("Receiving...");
   try {
     const user = req.user;
     console.log("Authenticated User:", user);
     console.log("Authenticated User ID (sub):", user.userId);
 
     const { entryId } = req.body.entryId;
-    console.log("This is the entryId", entryId)
+    console.log("This is the entryId", entryId);
 
     if (!entryId) {
       return res.status(400).json({ error: "Form ID is required" });
@@ -77,10 +78,11 @@ export const receiveFormData = async (req, res) => {
     const applicationData = {
       userId: user.userId,
       username: user.username,
-      formId, 
+      formId: entryId,
       timestamp: new Date().toISOString(),
     };
 
+    // Use secrets if additional configuration is needed
     await addApplicationToUser(applicationData);
 
     res.status(200).json({ success: true, message: "Form ID logged successfully!" });

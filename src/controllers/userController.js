@@ -11,17 +11,26 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
-import cookieParser from "cookie-parser";
+import { getSecrets } from "../utils/secrets.js"; // Import the secret-fetching helper
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
+// Load environment variables for fallback
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
-const cognitoClient = new CognitoIdentityProviderClient({
-  region: process.env.AWS_DEFAULT_REGION,
-});
+// Initialize Cognito client with a placeholder; updated dynamically
+let cognitoClient;
+
+// Helper function to initialize Cognito client with secrets
+async function initCognitoClient() {
+  if (!cognitoClient) {
+    const secrets = await getSecrets();
+    cognitoClient = new CognitoIdentityProviderClient({
+      region: secrets.AWS_DEFAULT_REGION,
+    });
+  }
+}
 
 // Function to generate secret hash
 const generateSecretHash = (username, clientId, clientSecret) => {
@@ -33,106 +42,118 @@ const generateSecretHash = (username, clientId, clientSecret) => {
 
 // Signup function
 export const signup = async (req, res) => {
-  const { username, password, email } = req.body;
-  console.log("Received data in signup function");
-  const secretHash = generateSecretHash(
-    username,
-    process.env.AWS_CLIENT_ID,
-    process.env.AWS_CLIENT_SECRET
-  );
-  const params = {
-    ClientId: process.env.AWS_CLIENT_ID,
-    SecretHash: secretHash,
-    Username: username,
-    Password: password,
-    UserAttributes: [
-      {
-        Name: "email",
-        Value: email,
-      },
-    ],
-  };
-
-  console.log("These are the params: ", params);
-
   try {
+    const { username, password, email } = req.body;
+
+    await initCognitoClient();
+    const secrets = await getSecrets();
+
+    const secretHash = generateSecretHash(
+      username,
+      secrets.AWS_CLIENT_ID,
+      secrets.AWS_CLIENT_SECRET
+    );
+
+    const params = {
+      ClientId: secrets.AWS_CLIENT_ID,
+      SecretHash: secretHash,
+      Username: username,
+      Password: password,
+      UserAttributes: [
+        {
+          Name: "email",
+          Value: email,
+        },
+      ],
+    };
+
     const command = new SignUpCommand(params);
     const data = await cognitoClient.send(command);
+
     res.json(data);
   } catch (error) {
-    console.log("Error here");
+    console.error("Error in signup:", error);
     res.status(400).json({ error: error.message });
   }
 };
 
 // Confirm signup function
 export const confirmSignup = async (req, res) => {
-  const { username, confirmationCode } = req.body;
-  const clientId = process.env.AWS_CLIENT_ID;
-  const clientSecret = process.env.AWS_CLIENT_SECRET;
-
-  const secretHash = generateSecretHash(username, clientId, clientSecret);
-
-  const params = {
-    ClientId: clientId,
-    Username: username,
-    ConfirmationCode: confirmationCode,
-    SecretHash: secretHash,
-  };
-
   try {
+    const { username, confirmationCode } = req.body;
+
+    await initCognitoClient();
+    const secrets = await getSecrets();
+
+    const secretHash = generateSecretHash(
+      username,
+      secrets.AWS_CLIENT_ID,
+      secrets.AWS_CLIENT_SECRET
+    );
+
+    const params = {
+      ClientId: secrets.AWS_CLIENT_ID,
+      Username: username,
+      ConfirmationCode: confirmationCode,
+      SecretHash: secretHash,
+    };
+
     const command = new ConfirmSignUpCommand(params);
     const data = await cognitoClient.send(command);
+
     res.json({ message: "User confirmed successfully!", data });
   } catch (error) {
+    console.error("Error in confirmSignup:", error);
     res.status(400).json({ error: error.message });
   }
 };
 
 // SignIn function
 export const signIn = async (req, res) => {
-  const { username, password } = req.body;
-  console.log("Signing in");
-
-  const secretHash = generateSecretHash(
-    username,
-    process.env.AWS_CLIENT_ID,
-    process.env.AWS_CLIENT_SECRET
-  );
-
-  const params = {
-    AuthFlow: "USER_PASSWORD_AUTH",
-    ClientId: process.env.AWS_CLIENT_ID,
-    AuthParameters: {
-      USERNAME: username,
-      PASSWORD: password,
-      SECRET_HASH: secretHash,
-    },
-  };
-
   try {
+    const { username, password } = req.body;
+
+    await initCognitoClient();
+    const secrets = await getSecrets();
+
+    const secretHash = generateSecretHash(
+      username,
+      secrets.AWS_CLIENT_ID,
+      secrets.AWS_CLIENT_SECRET
+    );
+
+    const params = {
+      AuthFlow: "USER_PASSWORD_AUTH",
+      ClientId: secrets.AWS_CLIENT_ID,
+      AuthParameters: {
+        USERNAME: username,
+        PASSWORD: password,
+        SECRET_HASH: secretHash,
+      },
+    };
+
     const command = new InitiateAuthCommand(params);
     const data = await cognitoClient.send(command);
 
     const accessToken = data.AuthenticationResult.AccessToken;
-    const idToken = data.AuthenticationResult.IdToken; 
+    const idToken = data.AuthenticationResult.IdToken;
     const refreshToken = data.AuthenticationResult.RefreshToken;
 
-    const decodedIdToken = decode(idToken); 
+    const decodedIdToken = decode(idToken);
 
     if (!decodedIdToken || !decodedIdToken.sub) {
       throw new Error("User ID (sub) not found in the ID token.");
     }
 
-    const userSub = decodedIdToken.sub;  
+    const userSub = decodedIdToken.sub;
 
     const jwtToken = jwt.sign(
-      { 
-        sub: userSub,  
-        clientId: process.env.AWS_CLIENT_ID,
-        username  
+      {
+        sub: userSub,
+        clientId: secrets.AWS_CLIENT_ID,
+        username,
       },
-      process.env.MY_SECRET_JWT_KEY,
+      secrets.MY_SECRET_JWT_KEY,
       { expiresIn: "1h" }
     );
 
@@ -151,48 +172,53 @@ export const signIn = async (req, res) => {
       idToken,
       refreshToken,
     });
-    console.log("Sign in Successful");
   } catch (error) {
-    console.log(error);
+    console.error("Error in signIn:", error);
     res.status(400).json({ error: error.message });
   }
 };
 
+// Logout function
 export const logOut = async (req, res) => {
-  const authHeader = req.headers.authorization;
-
-  console.log("Extracted Token:", authHeader);
-
-  const params = {
-    AccessToken: authHeader,
-  };
-
   try {
+    const authHeader = req.headers.authorization;
+
+    await initCognitoClient();
+
+    const params = {
+      AccessToken: authHeader,
+    };
+
     const command = new GlobalSignOutCommand(params);
     await cognitoClient.send(command);
 
     res.json({ message: "Successfully logged out" });
   } catch (error) {
-    console.error("Logout Error:", error);
+    console.error("Error in logOut:", error);
     res.status(400).json({ error: error.message });
   }
 };
 
-export const getUserData = (req, res) => {
-  console.log("Getting user data");
-  const token = req.cookies.Token;
-  const origin = req.headers.origin;
+// Get User Data
+export const getUserData = async (req, res) => {
+  try {
+    const token = req.cookies.Token;
 
-  if (token) {
-    jwt.verify(token, process.env.MY_SECRET_JWT_KEY, (err, user) => {
+    if (!token) {
+      return res.sendStatus(401);
+    }
+
+    const secrets = await getSecrets();
+
+    jwt.verify(token, secrets.MY_SECRET_JWT_KEY, (err, user) => {
       if (err) {
-        console.log(err);
+        console.error("JWT verification failed:", err);
         return res.sendStatus(403);
       }
-      console.log("Welcome", user.username);
       res.json({ username: user.username });
     });
-  } else {
-    res.sendStatus(401); 
+  } catch (error) {
+    console.error("Error in getUserData:", error);
+    res.status(500).json({ error: "Failed to retrieve user data" });
   }
 };

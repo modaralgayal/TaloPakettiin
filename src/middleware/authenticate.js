@@ -1,8 +1,25 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
+import { getSecrets } from "../utils/secrets.js";
+import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 
-export const verifyAndDecodeJWT = (token) => {
+let cognitoClient;
+
+async function initCognitoClient() {
+  if (!cognitoClient) {
+    const secrets = await getSecrets();
+    cognitoClient = new CognitoIdentityProviderClient({
+      region: secrets.AWS_DEFAULT_REGION,
+    });
+  }
+}
+
+export const verifyAndDecodeJWT = async (token) => {
   try {
-    const decoded = jwt.verify(token, process.env.MY_SECRET_JWT_KEY);
+
+    await initCognitoClient();
+    const secrets = await getSecrets();
+
+    const decoded = jwt.verify(token, secrets.MY_SECRET_JWT_KEY);
     return decoded;
   } catch (error) {
     return null;
@@ -10,24 +27,24 @@ export const verifyAndDecodeJWT = (token) => {
 };
 
 export const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers.jwttoken; 
+  const authHeader = req.headers.jwttoken;
 
   if (!authHeader) {
-    return res.sendStatus(401); 
+    return res.sendStatus(401);
   }
 
-  const token = authHeader.split(' ')[1];  
+  const token = authHeader.split(" ")[1];
 
   const decodedToken = verifyAndDecodeJWT(token);
 
   if (!decodedToken) {
-    console.log('Invalid or expired token');
+    console.log("Invalid or expired token");
   }
   const userId = decodedToken.sub;
   if (!userId) {
-    console.log('User ID (sub) not found in the token');
-    return res.sendStatus(403);  
+    console.log("User ID (sub) not found in the token");
+    return res.sendStatus(403);
   }
-  req.user = { userId, ...decodedToken }; 
+  req.user = { userId, ...decodedToken };
   next();
 };
