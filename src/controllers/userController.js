@@ -1,6 +1,3 @@
-// Import the necessary libraries
-import dotenv from "dotenv";
-import path from "path";
 import jwt, { decode } from "jsonwebtoken";
 import {
   CognitoIdentityProviderClient,
@@ -10,19 +7,10 @@ import {
   GlobalSignOutCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
-import { fileURLToPath } from "url";
-import { getSecrets } from "../utils/secrets.js"; // Import the secret-fetching helper
+import { getSecrets } from "../utils/secrets.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load environment variables for fallback
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-// Initialize Cognito client with a placeholder; updated dynamically
 let cognitoClient;
 
-// Helper function to initialize Cognito client with secrets
 async function initCognitoClient() {
   if (!cognitoClient) {
     const secrets = await getSecrets();
@@ -32,7 +20,6 @@ async function initCognitoClient() {
   }
 }
 
-// Function to generate secret hash
 const generateSecretHash = (username, clientId, clientSecret) => {
   return crypto
     .createHmac("SHA256", clientSecret)
@@ -40,7 +27,6 @@ const generateSecretHash = (username, clientId, clientSecret) => {
     .digest("base64");
 };
 
-// Signup function
 export const signup = async (req, res) => {
   try {
     const { username, password, email } = req.body;
@@ -77,7 +63,6 @@ export const signup = async (req, res) => {
   }
 };
 
-// Confirm signup function
 export const confirmSignup = async (req, res) => {
   try {
     const { username, confirmationCode } = req.body;
@@ -108,7 +93,6 @@ export const confirmSignup = async (req, res) => {
   }
 };
 
-// SignIn function
 export const signIn = async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -162,6 +146,7 @@ export const signIn = async (req, res) => {
       httpOnly: true,
       path: "/",
       sameSite: "None",
+      domain: "talopakettiin.fi",
     });
 
     res.json({

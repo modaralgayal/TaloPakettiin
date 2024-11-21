@@ -1,9 +1,17 @@
-import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+import { fromIni } from "@aws-sdk/credential-provider-ini";
 
-const secretName = "talopakettiin"; // Replace with your secret name
-const region = "eu-north-1"; // Update with your AWS region
+const secretName = "talopakettiin";
+const region = "eu-north-1";
 
-const secretsManagerClient = new SecretsManagerClient({ region });
+// Set credentials explicitly from a specific profile (default)
+const secretsManagerClient = new SecretsManagerClient({
+  region,
+  credentials: fromIni({ profile: "default" }), // Explicitly use the "default" profile
+});
 
 let cachedSecrets;
 

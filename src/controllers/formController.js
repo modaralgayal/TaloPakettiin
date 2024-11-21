@@ -1,17 +1,14 @@
-import { scanTable, addItemToTable, addApplicationToUser } from "../services/dynamoServices.js";
-import path from "path";
-import { fileURLToPath } from "url";
+import {
+  addItemToTable,
+  addApplicationToUser,
+} from "../services/dynamoServices.js";
 import { ScanCommand } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { getSecrets } from "../utils/secrets.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Initialize secrets and client
 let secrets;
 (async () => {
-  secrets = await getSecrets(); // Fetch secrets once at initialization
+  secrets = await getSecrets();
 })();
 
 export const addApplicationForm = async (req, res) => {
@@ -30,7 +27,6 @@ export const addApplicationForm = async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    // Use secrets to access the table name
     await addItemToTable(Item, secrets.TABLE_NAME);
 
     res.status(201).json({ message: "Application form added successfully!" });
@@ -85,9 +81,13 @@ export const receiveFormData = async (req, res) => {
     // Use secrets if additional configuration is needed
     await addApplicationToUser(applicationData);
 
-    res.status(200).json({ success: true, message: "Form ID logged successfully!" });
+    res
+      .status(200)
+      .json({ success: true, message: "Form ID logged successfully!" });
   } catch (error) {
     console.error("Error processing form ID:", error);
-    res.status(500).json({ error: "An error occurred while processing the form ID." });
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the form ID." });
   }
 };

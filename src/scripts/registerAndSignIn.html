@@ -18,7 +18,7 @@
 
         formData = { username, email, password };
 
-        const endpoint = "https://3vbp2t1s-8000.euw.devtunnels.ms/user/signup";
+        const endpoint = "https://api.talopakettiin.fi/user/signup";
 
         try {
           const response = await fetch(endpoint, {
@@ -50,7 +50,7 @@
 
         formData = { username, password };
 
-        const endpoint = "https://3vbp2t1s-8000.euw.devtunnels.ms/user/signin";
+        const endpoint = "https://api.talopakettiin.fi/user/signin";
 
         try {
           const response = await fetch(endpoint, {

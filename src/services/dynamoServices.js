@@ -5,54 +5,53 @@ import {
   QueryCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import { getSecrets } from "../utils/secrets.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
-const client = new DynamoDBClient({
-  region: process.env.AWS_DEFAULT_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+const initDynamoDBClient = async () => {
+  const secrets = await getSecrets();
+  return new DynamoDBClient({
+    region: secrets.AWS_DEFAULT_REGION,
+    credentials: {
+      accessKeyId: secrets.AWS_ACCESS_KEY_ID,
+      secretAccessKey: secrets.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+};
 
 export const scanTable = async () => {
-  const params = { TableName: process.env.TABLE_NAME };
+  const client = await initDynamoDBClient();
+  const params = { TableName: "talopakettiin" };
   const data = await client.send(new ScanCommand(params));
   return data.Items.map((item) => unmarshall(item));
 };
 
 export const addItemToTable = async (item) => {
+  const client = await initDynamoDBClient();
   const params = {
-    TableName: process.env.TABLE_NAME,
+    TableName: "talopakettiin",
     Item: marshall(item),
   };
   await client.send(new PutItemCommand(params));
 };
 
 export const addApplicationToUser = async (item) => {
+  const client = await initDynamoDBClient();
   const id = uuidv4();
 
   const applicationData = {
-    id, 
-    userId: item.userId, 
-    username: item.username, 
-    entryId: item.entryId, 
+    id,
+    userId: item.userId,
+    username: item.username,
+    entryId: item.entryId,
     createdAt: new Date().toISOString(),
   };
 
   console.log("Adding to DynamoDB:", applicationData);
 
   const params = {
-    TableName: process.env.TABLE_NAME,
-    Item: marshall(applicationData), 
+    TableName: "talopakettiin",
+    Item: marshall(applicationData),
   };
 
   try {
@@ -69,11 +68,12 @@ export const getApplicationsForUser = async (req, res) => {
     console.log("Authenticated User:", user);
     console.log("Authenticated User ID (sub):", user.userId);
 
+    const client = await initDynamoDBClient();
     const userId = user.userId;
 
     const params = {
-      TableName: process.env.TABLE_NAME,
-      IndexName: "userId-index", 
+      TableName: "talopakettiin",
+      IndexName: "userId-index",
       KeyConditionExpression: "userId = :userId",
       ExpressionAttributeValues: {
         ":userId": { S: userId },
