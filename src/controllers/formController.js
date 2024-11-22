@@ -59,10 +59,10 @@ export const receiveFormData = async (req, res) => {
   console.log("Receiving...");
   try {
     const user = req.user;
-    console.log("Authenticated User:", user);
-    console.log("Authenticated User ID (sub):", user.userId);
+    console.log("This is the request body: ", req.body);
 
-    const { entryId } = req.body.entryId;
+    // Access entry directly, as it's a string
+    const entryId = req.body.entry;
     console.log("This is the entryId", entryId);
 
     if (!entryId) {
@@ -74,7 +74,7 @@ export const receiveFormData = async (req, res) => {
     const applicationData = {
       userId: user.userId,
       username: user.username,
-      formId: entryId,
+      entryId: entryId,
       timestamp: new Date().toISOString(),
     };
 
@@ -91,3 +91,4 @@ export const receiveFormData = async (req, res) => {
       .json({ error: "An error occurred while processing the form ID." });
   }
 };
+

@@ -25,28 +25,36 @@ export const verifyAndDecodeJWT = async (token) => {
   }
 };
 
-export const authenticateJWT = (req, res, next) => {
-  const authHeader = req.headers;
-  console.log(authHeader)
-  console.log("fetching")
-  if (!authHeader) {
-    return res.sendStatus(401);
-  }
-  console.log("Found authHEader:", authHeader);
+export const authenticateJWT = async (req, res, next) => {
+  try {
+    const token = req.headers.token;
+    console.log("fetching");
 
-  const token = authHeader.split(" ")[1];
+    if (!token) {
+      return res.sendStatus(401);
+    }
 
-  const decodedToken = verifyAndDecodeJWT(token);
+    //console.log("Found token:", token);
+    const decodedToken = await verifyAndDecodeJWT(token);
 
-  if (!decodedToken) {
-    console.log("Invalid or expired token");
+    if (!decodedToken) {
+      console.log("Invalid or expired token");
+      return res.sendStatus(401);
+    }
+
+    //console.log(decodedToken);
+    const userId = decodedToken.sub;
+
+    if (!userId) {
+      console.log("User ID (sub) not found in the token");
+      return res.sendStatus(403);
+    }
+
+    // Remove undefined `authHeader` or define it correctly
+    req.user = { userId, ...decodedToken };
+    next();
+  } catch (err) {
+    console.error("Error in authenticateJWT:", err.message);
+    res.sendStatus(500); // Internal Server Error
   }
-  const userId = decodedToken.sub;
-  if (!userId) {
-    console.log("User ID (sub) not found in the token");
-    return res.sendStatus(403);
-  }
-  res.json({ message: "Trying to find: ", authHeader });
-  req.user = { userId, ...decodedToken };
-  next();
 };

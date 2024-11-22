@@ -50,7 +50,7 @@ export const addApplicationToUser = async (item) => {
   console.log("Adding to DynamoDB:", applicationData);
 
   const params = {
-    TableName: "talopakettiin",
+    TableName: "Talopakettiin-API",
     Item: marshall(applicationData),
   };
 

@@ -50,8 +50,6 @@ app.get("/api/test", (req, res) => {
   res.json({ message: "This is a test." });
 });
 
-// Error Handling Middleware
-
 // Middleware to catch TokenExpiredError
 const checkTokenExpiration = (err, req, res, next) => {
   if (err.name === "TokenExpiredError") {
