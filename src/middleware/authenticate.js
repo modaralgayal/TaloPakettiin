@@ -28,9 +28,10 @@ export const verifyAndDecodeJWT = async (token) => {
 export const authenticateJWT = async (req, res, next) => {
   try {
     const token = req.headers.token;
-    console.log("fetching");
+    console.log("fetching token: ", token);
 
     if (!token) {
+      console.log("Token not found");
       return res.sendStatus(401);
     }
 
@@ -55,6 +56,8 @@ export const authenticateJWT = async (req, res, next) => {
     next();
   } catch (err) {
     console.error("Error in authenticateJWT:", err.message);
-    res.sendStatus(500); // Internal Server Error
+    res.status(500).json({
+      error: `An internal error occurred while authenticating the token: ${err.message}`,
+    });
   }
 };
