@@ -2,7 +2,7 @@ import {
   addItemToTable,
   addApplicationToUser,
 } from "../services/dynamoServices.js";
-import { ScanCommand } from "@aws-sdk/client-dynamodb";
+import { ScanCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import { getSecrets } from "../utils/secrets.js";
 
@@ -11,49 +11,17 @@ let secrets;
   secrets = await getSecrets();
 })();
 
-export const addApplicationForm = async (req, res) => {
-  try {
-    const userId = req.user;
-    const application = req.body.application;
-
-    console.log("This is user Id: ", userId);
-    console.log("This is the application: ", application);
-
-    const Item = {
-      id: uuidv4(),
-      username: userId.username,
-      clientId: userId.clientId,
-      Applications: application,
-      createdAt: new Date().toISOString(),
-    };
-
-    await addItemToTable(Item, secrets.TABLE_NAME);
-
-    res.status(201).json({ message: "Application form added successfully!" });
-  } catch (error) {
-    console.error("Error adding application form:", error);
-    res.status(500).json({ error: "Failed to add application form" });
-  }
+const client = async () => {
+  const secrets = await getSecrets();
+  return new DynamoDBClient({
+    region: secrets.AWS_DEFAULT_REGION,
+    credentials: {
+      accessKeyId: secrets.AWS_ACCESS_KEY_ID,
+      secretAccessKey: secrets.AWS_SECRET_ACCESS_KEY,
+    },
+  });
 };
 
-export const getItemsByClientId = async (clientId) => {
-  try {
-    const params = {
-      TableName: secrets.TABLE_NAME, // Use secrets for the table name
-      FilterExpression: "clientId = :clientId",
-      ExpressionAttributeValues: {
-        ":clientId": clientId,
-      },
-    };
-
-    const command = new ScanCommand(params);
-    const data = await client.send(command); // Ensure `client` is initialized with secrets
-    return data.Items;
-  } catch (error) {
-    console.error("Error fetching items by clientId:", error);
-    throw new Error("Failed to fetch items");
-  }
-};
 
 export const receiveFormData = async (req, res) => {
   console.log("Receiving...");

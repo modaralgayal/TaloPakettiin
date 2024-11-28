@@ -64,15 +64,11 @@ export const addApplicationToUser = async (item) => {
 
 export const getApplicationsForUser = async (req, res) => {
   try {
-    const user = req.user;
-    console.log("Authenticated User:", user);
-    console.log("Authenticated User ID (sub):", user.userId);
-
+    const userId = req.user.userId;
     const client = await initDynamoDBClient();
-    const userId = user.userId;
 
     const params = {
-      TableName: "talopakettiin",
+      TableName: "Talopakettiin-API",
       IndexName: "userId-index",
       KeyConditionExpression: "userId = :userId",
       ExpressionAttributeValues: {
@@ -80,19 +76,40 @@ export const getApplicationsForUser = async (req, res) => {
       },
     };
 
-    const data = await client.send(new QueryCommand(params));
+    const command = new QueryCommand(params);
+    const data = await client.send(command);
+    const applications = data.Items.map((item) => item.entryId.S);
 
-    const applications = data.Items
-      ? data.Items.map((item) => unmarshall(item))
-      : [];
-
-    console.log("Fetched Applications:", applications);
-
-    res.json({ success: true, applications });
+    console.log(applications);
+    res.status(200).json({ applications });
   } catch (error) {
     console.error("Error fetching applications for user:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch applications" });
+    res.status(500).json({ error: "Failed to fetch applications" });
+  }
+};
+
+export const getAllEntryIds = async (req, res) => {
+  try {
+    const client = await initDynamoDBClient();
+
+    const params = {
+      TableName: "Talopakettiin-API",
+      ProjectionExpression: "entryId, userId",
+    };
+
+    const command = new ScanCommand(params);
+    const data = await client.send(command);
+
+    console.log("Fetched entries:", data.Items);
+
+    const result = data.Items.map((item) => ({
+      entryId: item.entryId.S,
+      userId: item.userId.S,
+    }));
+
+    res.status(200).json({ entries: result });
+  } catch (error) {
+    console.error("Error fetching entries:", error);
+    res.status(500).json({ error: "Failed to fetch entries" });
   }
 };
