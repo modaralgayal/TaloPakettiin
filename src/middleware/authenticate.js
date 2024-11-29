@@ -26,12 +26,13 @@ export const verifyAndDecodeJWT = async (token) => {
 };
 
 export const authenticateJWT = async (req, res, next) => {
+  console.log("Authenticating user");
   try {
     const token = req.headers.token;
     // console.log("fetching token: ", token);
 
     if (!token) {
-      console.log("Token not found");
+      console.log("Token not found in Backend");
       return res.sendStatus(401);
     }
 

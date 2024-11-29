@@ -22,7 +22,6 @@ const client = async () => {
   });
 };
 
-
 export const receiveFormData = async (req, res) => {
   console.log("Receiving...");
   try {
@@ -39,10 +38,11 @@ export const receiveFormData = async (req, res) => {
 
     console.log("Received Form ID:", entryId);
 
+    // Ensure entryId is a string
     const applicationData = {
       userId: user.userId,
       username: user.username,
-      entryId: entryId,
+      entryId: String(entryId), // Ensure entryId is treated as a string
       timestamp: new Date().toISOString(),
     };
 

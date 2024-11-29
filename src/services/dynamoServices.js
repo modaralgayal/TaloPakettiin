@@ -39,11 +39,12 @@ export const addApplicationToUser = async (item) => {
   const client = await initDynamoDBClient();
   const id = uuidv4();
 
+  // Ensure the entryId is a string
   const applicationData = {
     id,
     userId: item.userId,
     username: item.username,
-    entryId: item.entryId,
+    entryId: String(item.entryId), // Convert entryId to string
     createdAt: new Date().toISOString(),
   };
 
