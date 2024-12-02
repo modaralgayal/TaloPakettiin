@@ -28,8 +28,15 @@ const generateSecretHash = (username, clientId, clientSecret) => {
 };
 
 export const signup = async (req, res) => {
+  console.log("Signing up");
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, userType } = req.body;
+
+    if (!["customer", "provider"].includes(userType)) {
+      throw new Error(
+        "Invalid user type. Allowed values are 'Customer' or 'Provider'."
+      );
+    }
 
     await initCognitoClient();
     const secrets = await getSecrets();
@@ -49,6 +56,10 @@ export const signup = async (req, res) => {
         {
           Name: "email",
           Value: email,
+        },
+        {
+          Name: "custom:UserType",
+          Value: userType, // Dynamically set the user type
         },
       ],
     };
@@ -95,7 +106,7 @@ export const confirmSignup = async (req, res) => {
 
 export const signIn = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, userType } = req.body;
 
     await initCognitoClient();
     const secrets = await getSecrets();
@@ -119,24 +130,23 @@ export const signIn = async (req, res) => {
     const command = new InitiateAuthCommand(params);
     const data = await cognitoClient.send(command);
 
-    const accessToken = data.AuthenticationResult.AccessToken;
     const idToken = data.AuthenticationResult.IdToken;
-    const refreshToken = data.AuthenticationResult.RefreshToken;
 
+    // Decode the ID token to extract user attributes
     const decodedIdToken = decode(idToken);
-
     if (!decodedIdToken || !decodedIdToken.sub) {
-      throw new Error("User ID (sub) not found in the ID token.");
+      throw new Error("Invalid ID token.");
     }
 
-    const userSub = decodedIdToken.sub;
+    const userTypeFromToken = decodedIdToken["custom:UserType"];
+    if (userTypeFromToken !== userType) {
+      throw new Error("User type mismatch. Access denied.");
+    }
 
+    // Continue with JWT signing or response setup
+    const userSub = decodedIdToken.sub;
     const jwtToken = jwt.sign(
-      {
-        sub: userSub,
-        clientId: secrets.AWS_CLIENT_ID,
-        username,
-      },
+      { sub: userSub, clientId: secrets.AWS_CLIENT_ID, username },
       secrets.MY_SECRET_JWT_KEY,
       { expiresIn: "1h" }
     );
@@ -149,13 +159,21 @@ export const signIn = async (req, res) => {
       domain: "talopakettiin.fi",
     });
 
+    res.cookie("usertype", userType, {
+      secure: true,
+      httpOnly: true,
+      path: "/",
+      sameSite: "None",
+      domain: "talopakettiin.fi",
+    });
+
     res.json({
       success: true,
       message: "Sign in successful!",
       redirectUrl: "https://talopakettiin.fi/my-home-page-2/",
-      accessToken,
+      accessToken: data.AuthenticationResult.AccessToken,
       idToken,
-      refreshToken,
+      refreshToken: data.AuthenticationResult.RefreshToken,
     });
   } catch (error) {
     console.error("Error in signIn:", error);
@@ -163,47 +181,18 @@ export const signIn = async (req, res) => {
   }
 };
 
-// Logout function
-export const logOut = async (req, res) => {
+export const logOut = (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-
-    await initCognitoClient();
-
-    const params = {
-      AccessToken: authHeader,
-    };
-
-    const command = new GlobalSignOutCommand(params);
-    await cognitoClient.send(command);
+    res.cookie("token", "", {
+      expires: new Date(0),
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
 
     res.json({ message: "Successfully logged out" });
   } catch (error) {
     console.error("Error in logOut:", error);
     res.status(400).json({ error: error.message });
-  }
-};
-
-// Get User Data
-export const getUserData = async (req, res) => {
-  try {
-    const token = req.cookies.Token;
-
-    if (!token) {
-      return res.sendStatus(401);
-    }
-
-    const secrets = await getSecrets();
-
-    jwt.verify(token, secrets.MY_SECRET_JWT_KEY, (err, user) => {
-      if (err) {
-        console.error("JWT verification failed:", err);
-        return res.sendStatus(403);
-      }
-      res.json({ username: user.username });
-    });
-  } catch (error) {
-    console.error("Error in getUserData:", error);
-    res.status(500).json({ error: "Failed to retrieve user data" });
   }
 };

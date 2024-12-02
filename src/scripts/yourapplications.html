@@ -1,0 +1,181 @@
+<div id="applications" class="container">
+  <ul id="applicationsList"></ul>
+  <!-- This is where the applications will be displayed -->
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const applicationsList = document.getElementById("applicationsList");
+
+    // Fetch applications as soon as the page loads
+    fetchApplications();
+
+    function fetchApplications() {
+      // Make sure ajax_object.ajax_url is passed from the WordPress backend
+      const url = ajax_object.ajax_url + "?action=get_user_applications";
+
+      // Send the GET request
+      fetch(url, {
+        method: "GET",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            displayApplications(data.data); // Display applications if data is successfully fetched
+          } else {
+            console.error("Error:", data.data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+
+    // Function to display the applications in a list
+    function displayApplications(applications) {
+      // Clear the list before adding new items
+      applicationsList.innerHTML = "";
+
+      // Loop through the applications and create list items
+      applications.forEach((application, index) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("application-item"); // Add a class for styling
+
+        // Create a title for each application (index or specific info)
+        const title = document.createElement("button");
+        title.classList.add("application-title");
+        title.textContent = `Application ${index + 1}`;
+        listItem.appendChild(title);
+
+        // Create a div for the detailed information
+        const detailsContainer = document.createElement("div");
+        detailsContainer.classList.add("application-details");
+        detailsContainer.style.display = "none"; // Hide details initially
+
+        // Loop through the application's data and display key-value pairs
+        for (const [key, value] of Object.entries(application)) {
+          // Exclude the entryId field
+          if (key === "entryId") continue;
+
+          // Handle 'fields' object to display nested data properly
+          if (key === "fields" && typeof value === "object") {
+            for (const [fieldName, fieldValue] of Object.entries(value)) {
+              const paragraph = document.createElement("p");
+              paragraph.classList.add("application-detail");
+              paragraph.innerHTML = `<strong>${fieldName}:</strong> ${fieldValue}`;
+              detailsContainer.appendChild(paragraph);
+            }
+          } else {
+            // For other fields, display them normally
+            const paragraph = document.createElement("p");
+            paragraph.classList.add("application-detail");
+            paragraph.innerHTML = `<strong>${key}:</strong> ${value}`;
+            detailsContainer.appendChild(paragraph);
+          }
+        }
+
+        // Toggle details when the title button is clicked
+        title.addEventListener("click", () => {
+          if (detailsContainer.style.display === "none") {
+            detailsContainer.style.display = "block"; // Show details
+          } else {
+            detailsContainer.style.display = "none"; // Hide details
+          }
+        });
+
+        // Append the title and details container to the list item
+        listItem.appendChild(detailsContainer);
+        applicationsList.appendChild(listItem);
+      });
+    }
+
+    // jQuery AJAX request to fetch custom shortcode
+    jQuery.ajax({
+      url: custom_shortcode_ajax.ajax_url,
+      type: "POST",
+      data: {
+        action: "get_custom_shortcode", // Matches the AJAX action in PHP
+      },
+      success: function (response) {
+        if (response.success) {
+          console.log("Shortcode Content:", response.data);
+          // Append the shortcode content to the page
+          const shortcodeContainer = document.createElement("div");
+          shortcodeContainer.id = "shortcodeContent";
+          shortcodeContainer.style.marginTop = "10px";
+          shortcodeContainer.innerHTML = response.data;
+          applicationsList.parentElement.appendChild(shortcodeContainer);
+        } else {
+          console.error("Error:", response.data.message);
+        }
+      },
+      error: function (error) {
+        console.error("AJAX Error:", error);
+      },
+    });
+  });
+</script>
+
+<style>
+  /* Container to center the content on the page */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+  }
+
+  /* Basic styling for the applications list */
+  #applicationsList {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+
+  .application-item {
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  }
+
+  /* Style the title button */
+  .application-title {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.2em;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .application-title:hover {
+    background-color: #45a049;
+  }
+
+  /* Style the application details */
+  .application-details {
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+
+  .application-detail {
+    font-size: 1em;
+    color: #555;
+    margin: 5px 0;
+  }
+
+  .application-detail strong {
+    color: #222;
+  }
+</style>

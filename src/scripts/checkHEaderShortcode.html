@@ -1,0 +1,31 @@
+<div id="shortcodeContent"></div>
+<!-- This will be used to render the shortcode -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // jQuery AJAX request to fetch custom shortcode
+    jQuery.ajax({
+      url: custom_shortcode_ajax.ajax_url,
+      type: "POST",
+      data: {
+        action: "get_custom_shortcode", // Matches the AJAX action in PHP
+      },
+      success: function (response) {
+        if (response.success) {
+          console.log("Shortcode Content:", response.data);
+
+          // Get the body element and prepend the shortcode content to the top of the page
+          const body = document.body;
+          const shortcodeContainer = document.createElement("div");
+          shortcodeContainer.innerHTML = response.data;
+          body.insertBefore(shortcodeContainer, body.firstChild); // Insert at the top
+        } else {
+          console.error("Error:", response.data.message);
+        }
+      },
+      error: function (error) {
+        console.error("AJAX Error:", error);
+      },
+    });
+  });
+</script>
