@@ -29,14 +29,12 @@ export const authenticateJWT = async (req, res, next) => {
   console.log("Authenticating user");
   try {
     const token = req.headers.token;
-    // console.log("fetching token: ", token);
 
     if (!token) {
       console.log("Token not found in Backend");
       return res.sendStatus(401);
     }
 
-    //console.log("Found token:", token);
     const decodedToken = await verifyAndDecodeJWT(token);
 
     if (!decodedToken) {
@@ -44,16 +42,23 @@ export const authenticateJWT = async (req, res, next) => {
       return res.sendStatus(401);
     }
 
-    //console.log(decodedToken);
     const userId = decodedToken.sub;
+    //console.log(decodedToken);
 
     if (!userId) {
       console.log("User ID (sub) not found in the token");
       return res.sendStatus(403);
     }
 
-    // Remove undefined `authHeader` or define it correctly
-    req.user = { userId, ...decodedToken };
+    const usertype = req.headers.usertype;
+    //console.log("This is the usertype: ", usertype);
+    //console.log(req.headers);
+    if (usertype) {
+      req.user = { userId, usertype, ...decodedToken };
+    } else {
+      req.user = { userId, ...decodedToken };
+    }
+
     next();
   } catch (err) {
     console.error("Error in authenticateJWT:", err.message);

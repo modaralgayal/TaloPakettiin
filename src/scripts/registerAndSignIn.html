@@ -8,10 +8,6 @@
       "#eael-register-form.eael-lr-form"
     );
 
-    document.getElementById("confirm").onclick = function () {
-      window.location.href = "https://talopakettiin.fi/confirm-signup/"; // Replace with your desired URL
-    };
-
     async function handleFormSubmission(event, formType) {
       event.preventDefault();
 
@@ -22,7 +18,7 @@
         ).value;
         const email = document.querySelector('input[name="email"]').value;
         const password = document.querySelector('input[name="password"]').value;
-        const userType = "customer";
+        const userType = "provider";
 
         formData = { username, email, password, userType };
 
@@ -43,8 +39,7 @@
             alert(
               "Registration successful! Please confirm with the code sent to your email."
             );
-            window.location.href =
-              "https://talopakettiin.fi/confirmation-signup/"; // Redirect on success
+            window.location.href = "https://talopakettiin.fi/confirm-signup/"; // Redirect on success
           } else {
             alert("Registration error: " + (result.error || "Unknown error"));
           }
@@ -59,8 +54,8 @@
         const password = document.querySelector(
           'input[name="eael-user-password"]'
         ).value;
-        
-        const userType = "customer";
+
+        const userType = "provider";
 
         formData = { username, password, userType };
 
@@ -126,4 +121,4 @@
   });
 </script>
 
-<div id="shortcodeContent" style="margin-top: 10px;"></div>
+<div id="shortcodeContent" style="margin-top: 10px"></div>

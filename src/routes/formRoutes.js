@@ -10,6 +10,6 @@ const router = express.Router();
 
 router.post("/receive-form-data", authenticateJWT, receiveFormData);
 router.get("/get-user-forms", authenticateJWT, getApplicationsForUser);
-router.get("/get-all-entries", getAllEntryIds);
+router.get("/get-all-entries", authenticateJWT ,getAllEntryIds);
 
 export default router;

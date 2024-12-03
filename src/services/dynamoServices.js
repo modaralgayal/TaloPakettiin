@@ -90,7 +90,15 @@ export const getApplicationsForUser = async (req, res) => {
 };
 
 export const getAllEntryIds = async (req, res) => {
+  console.log("Trying to fetch all entries");
+  console.log("This is the usertype in the request: ", req.user.usertype);
   try {
+    if (req.user.usertype != "provider") {
+      return res
+        .status(403)
+        .json({ error: "Access denied: User is not a provider" });
+    }
+    console.log("got here");
     const client = await initDynamoDBClient();
 
     const params = {
@@ -101,12 +109,11 @@ export const getAllEntryIds = async (req, res) => {
     const command = new ScanCommand(params);
     const data = await client.send(command);
 
-    console.log("Fetched entries:", data.Items);
-
     const result = data.Items.map((item) => ({
       entryId: item.entryId.S,
       userId: item.userId.S,
     }));
+    console.log("Fetched entries:", result);
 
     res.status(200).json({ entries: result });
   } catch (error) {
