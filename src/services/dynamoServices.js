@@ -3,6 +3,7 @@ import {
   ScanCommand,
   PutItemCommand,
   QueryCommand,
+  DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 import { v4 as uuidv4 } from "uuid";
@@ -119,5 +120,56 @@ export const getAllEntryIds = async (req, res) => {
   } catch (error) {
     console.error("Error fetching entries:", error);
     res.status(500).json({ error: "Failed to fetch entries" });
+  }
+};
+
+export const deleteItemByEntryId = async (req, res) => {
+  const { entryIdToDelete } = req.body;
+  console.log("Attempting to delete item with entryId: ", entryIdToDelete);
+
+  const client = await initDynamoDBClient();
+
+  const queryParams = {
+    TableName: "Talopakettiin-API",
+    IndexName: "entryId-userId-index",
+    KeyConditionExpression: "entryId = :entryId",
+    ExpressionAttributeValues: {
+      ":entryId": { S: entryIdToDelete.toString() },
+    },
+  };
+
+  try {
+    const data = await client.send(new QueryCommand(queryParams));
+
+    if (data.Items && data.Items.length > 0) {
+      const item = unmarshall(data.Items[0]);
+      const idToDelete = item.id;
+
+      const deleteParams = {
+        TableName: "Talopakettiin-API",
+        Key: {
+          id: { S: idToDelete },
+        },
+      };
+
+      await client.send(new DeleteItemCommand(deleteParams));
+      console.log(`Successfully deleted item with entryId: ${entryIdToDelete}`);
+      res.status(200).json({
+        message: `Successfully deleted item with entryId: ${entryIdToDelete}`,
+      });
+    } else {
+      console.log(`No item found with entryId: ${entryIdToDelete}`);
+      res.status(404).json({
+        error: `No item found with entryId: ${entryIdToDelete}`,
+      });
+    }
+  } catch (error) {
+    console.error(
+      `Error deleting item with entryId: ${entryIdToDelete}`,
+      error
+    );
+    res.status(500).json({
+      error: `Failed to delete item with entryId: ${entryIdToDelete}`,
+    });
   }
 };
