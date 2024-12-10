@@ -40,20 +40,11 @@ export const addApplicationToUser = async (item) => {
   const client = await initDynamoDBClient();
   const id = uuidv4();
 
-  // Ensure the entryId is a string
-  const applicationData = {
-    id,
-    userId: item.userId,
-    username: item.username,
-    entryId: String(item.entryId), // Convert entryId to string
-    createdAt: new Date().toISOString(),
-  };
-
-  console.log("Adding to DynamoDB:", applicationData);
+  console.log("Adding to DynamoDB:", item);
 
   const params = {
     TableName: "Talopakettiin-API",
-    Item: marshall(applicationData),
+    Item: marshall({ ...item, id }),
   };
 
   try {

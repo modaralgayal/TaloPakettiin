@@ -28,9 +28,10 @@ export const receiveFormData = async (req, res) => {
     const user = req.user;
     console.log("This is the request body: ", req.body);
 
-    // Access entry directly, as it's a string
-    const entryId = req.body.entry;
+    const entryId = req.body.entryId;
+    const entryType = req.body.entryType;
     console.log("This is the entryId", entryId);
+    console.log("This is the entryType", entryType);
 
     if (!entryId) {
       return res.status(400).json({ error: "Form ID is required" });
@@ -38,15 +39,25 @@ export const receiveFormData = async (req, res) => {
 
     console.log("Received Form ID:", entryId);
 
-    // Ensure entryId is a string
-    const applicationData = {
+    let applicationData = {
       userId: user.userId,
       username: user.username,
-      entryId: String(entryId), // Ensure entryId is treated as a string
+      entryId: String(entryId),
       timestamp: new Date().toISOString(),
     };
 
-    // Use secrets if additional configuration is needed
+    if (entryType === "offer") {
+      applicationData = {
+        ...applicationData,
+        status: "pending",
+        entryType: entryType,
+      };
+    } else {
+      applicationData.entryType = entryType;
+    }
+
+    console.log("This is the applicationData: ", applicationData);
+
     await addApplicationToUser(applicationData);
 
     res

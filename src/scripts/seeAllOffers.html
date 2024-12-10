@@ -1,0 +1,176 @@
+<div id="applications" class="container">
+  <h2>Kaikki hakemukset</h2>
+  <ul id="applicationsList"></ul>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const applicationsList = document.getElementById("applicationsList");
+
+    // Fetch applications as soon as the page loads
+    fetchApplications();
+
+    function fetchApplications() {
+      const url = ajax_object.ajax_url + "?action=get_applications";
+
+      fetch(url, {
+        method: "GET",
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            displayApplications(data.data);
+          } else {
+            console.error("Error:", data.data.message);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    }
+
+    function displayApplications(applications) {
+      applicationsList.innerHTML = "";
+
+      applications.forEach((application, index) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("application-item");
+
+        const title = document.createElement("button");
+        title.classList.add("application-title");
+        title.textContent = `Application ${index + 1}`;
+        listItem.appendChild(title);
+
+        const makeOfferButton = document.createElement("button");
+        makeOfferButton.classList.add("make-offer-button");
+        makeOfferButton.textContent = "Make Offer";
+        makeOfferButton.addEventListener("click", () => {
+          redirectToOfferForm(application.entryId);
+        });
+        listItem.appendChild(makeOfferButton);
+
+        const detailsContainer = document.createElement("div");
+        detailsContainer.classList.add("application-details");
+        detailsContainer.style.display = "none";
+
+        for (const [key, value] of Object.entries(application)) {
+          if (key === "entryId") continue;
+          if (key === "fields" && typeof value === "object") {
+            for (const [fieldName, fieldValue] of Object.entries(value)) {
+              const paragraph = document.createElement("p");
+              paragraph.classList.add("application-detail");
+              paragraph.innerHTML = `<strong>${fieldName}:</strong> ${fieldValue}`;
+              detailsContainer.appendChild(paragraph);
+            }
+          } else {
+            const paragraph = document.createElement("p");
+            paragraph.classList.add("application-detail");
+            paragraph.innerHTML = `<strong>${key}:</strong> ${value}`;
+            detailsContainer.appendChild(paragraph);
+          }
+        }
+
+        title.addEventListener("click", () => {
+          detailsContainer.style.display =
+            detailsContainer.style.display === "none" ? "block" : "none";
+        });
+
+        listItem.appendChild(detailsContainer);
+        applicationsList.appendChild(listItem);
+      });
+    }
+
+    // make-offer-to-customer/
+
+    function redirectToOfferForm(entryId) {
+      window.location.href = `/make-offer-to-customer/`;
+    }
+  });
+</script>
+
+<style>
+  /* Container to center the content on the page */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+  }
+
+  /* Heading style */
+  h2 {
+    font-size: 50px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+
+  /* Basic styling for the applications list */
+  #applicationsList {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+  }
+
+  .application-item {
+    background-color: #f9f9f9;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: left;
+  }
+
+  .application-title {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.2em;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .application-title:hover {
+    background-color: #45a049;
+  }
+
+  .make-offer-button {
+    width: 100%;
+    padding: 5px; /* Smaller padding */
+    font-size: 0.9em; /* Slightly smaller font */
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: left;
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+
+  .make-offer-button:hover {
+    background-color: #0056b3;
+  }
+
+  .application-details {
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+  }
+
+  .application-detail {
+    font-size: 1em;
+    color: #555;
+    margin: 5px 0;
+  }
+
+  .application-detail strong {
+    color: #222;
+  }
+</style>
