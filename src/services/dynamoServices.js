@@ -114,6 +114,82 @@ export const getAllEntryIds = async (req, res) => {
   }
 };
 
+export const getOffersForUser = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const client = await initDynamoDBClient();
+
+    console.log("User ID:", userId);
+
+    const applicationParams = {
+      TableName: "Talopakettiin-API",
+      IndexName: "userId-index",
+      KeyConditionExpression: "userId = :userId",
+      ExpressionAttributeValues: {
+        ":userId": { S: userId },
+      },
+    };
+
+    const applicationCommand = new QueryCommand(applicationParams);
+    console.log("Application Params:", applicationParams);
+
+    const applicationData = await client.send(applicationCommand);
+    console.log("Application Data:", JSON.stringify(applicationData, null, 2));
+
+    // Safely extract entryId values
+    const applicationIds = applicationData.Items.map(
+      (item) => item.entryId?.S
+    ).filter((entryId) => entryId !== undefined); // Remove undefined values
+    console.log("Application IDs:", applicationIds);
+
+    if (applicationIds.length === 0) {
+      return res.status(200).json({ offers: [] });
+    }
+
+    let offers = [];
+
+    for (const entryId of applicationIds) {
+      const offerParams = {
+        TableName: "Talopakettiin-API",
+        IndexName: "entryType-entryId-index",
+        KeyConditionExpression: "entryType = :entryType AND entryId = :entryId",
+        ExpressionAttributeValues: {
+          ":entryType": { S: "offer" },
+          ":entryId": { S: entryId },
+        },
+      };
+
+      const offerCommand = new QueryCommand(offerParams);
+      const offerData = await client.send(offerCommand);
+      console.log("Offer Params:", offerParams);
+      console.log("Offer Data:", JSON.stringify(offerData, null, 2));
+
+      if (offerData.Items?.length > 0) {
+        // Map all attributes for each item
+        const mappedOffers = offerData.Items.map((item) => {
+          const attributes = {};
+          for (const key in item) {
+            // Dynamically handle both S (string) and N (number) types
+            attributes[key] = item[key]?.S || item[key]?.N || null;
+          }
+          return attributes;
+        });
+        offers.push(...mappedOffers);
+      } else {
+        console.log(`No offers found for entryId: ${entryId}`);
+      }
+    }
+
+    const cleanedEntry = JSON.stringify(offers, null, 2);
+
+    console.log("Final Offers:", JSON.stringify(offers, null, 2));
+    res.status(200).json({ cleanedEntry });
+  } catch (error) {
+    console.error("Error fetching offers for user:", error);
+    res.status(500).json({ error: "Failed to fetch offers" });
+  }
+};
+
 export const deleteItemByEntryId = async (req, res) => {
   const { entryIdToDelete } = req.body;
   console.log("Attempting to delete item with entryId: ", entryIdToDelete);
@@ -161,6 +237,39 @@ export const deleteItemByEntryId = async (req, res) => {
     );
     res.status(500).json({
       error: `Failed to delete item with entryId: ${entryIdToDelete}`,
+    });
+  }
+};
+
+export const acceptOffer = async (req, res) => {
+  try {
+    const dynamoDBClient = await initDynamoDBClient();
+
+    const { id } = req.body.id;
+    console.log("This is the body: ", req.body);
+    const status = "Accepted";
+
+    const params = {
+      TableName: "Talopakettiin-API",
+      Item: marshall({
+        id: id,
+        status: status,
+      }),
+    };
+
+    const result = await dynamoDBClient.send(new PutItemCommand(params));
+
+    res.json({
+      success: true,
+      message: "Offer accepted successfully.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error accepting offer:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to accept the offer.",
+      error: error.message,
     });
   }
 };

@@ -29,6 +29,7 @@ export const receiveFormData = async (req, res) => {
     console.log("This is the request body: ", req.body);
 
     const entryId = req.body.entryId;
+    const offerId = req.body.offerId;
     const entryType = req.body.entryType;
     console.log("This is the entryId", entryId);
     console.log("This is the entryType", entryType);
@@ -42,18 +43,25 @@ export const receiveFormData = async (req, res) => {
     let applicationData = {
       userId: user.userId,
       username: user.username,
-      entryId: String(entryId),
+
       timestamp: new Date().toISOString(),
     };
 
     if (entryType === "offer") {
       applicationData = {
         ...applicationData,
+        offerId: offerId,
+        entryId: String(entryId),
         status: "pending",
         entryType: entryType,
       };
     } else {
-      applicationData.entryType = entryType;
+      applicationData = {
+        ...applicationData,
+        entryId: String(entryId),
+        status: "applied - pending",
+        entryType: "application",
+      };
     }
 
     console.log("This is the applicationData: ", applicationData);
